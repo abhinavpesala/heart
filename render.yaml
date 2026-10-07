@@ -1,0 +1,18 @@
+# Render Blueprint: New + > Blueprint > pick this repo.  (Or create a Web Service by hand with the same values.)
+services:
+  - type: web
+    name: cardiac-risk-api
+    runtime: python
+    plan: free
+    region: oregon
+    # Train at build time so the saved models always match the library versions installed on the server.
+    buildCommand: pip install -r requirements.txt && python -m backend.train
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: N_REPEATS            # CV repeats during the Render build (3 locally; 2 keeps the build fast)
+        value: "2"
+      - key: CORS_ORIGINS         # <-- put your Vercel URL here after the first frontend deploy
+        value: https://YOUR-APP.vercel.app

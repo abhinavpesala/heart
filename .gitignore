@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+# trained artifacts are rebuilt by `python -m backend.train` (Render does this in its build command)
+backend/models/*
+!backend/models/.gitkeep

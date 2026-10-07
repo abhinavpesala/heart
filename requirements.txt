@@ -1,0 +1,8 @@
+# Lean on purpose: no torch / transformers / xgboost / lightgbm / catboost (they would not fit Render's free tier).
+numpy>=1.26,<3
+pandas>=2.1,<4
+scikit-learn>=1.4,<2
+joblib>=1.3
+fastapi>=0.110
+uvicorn>=0.27
+pydantic>=2.5

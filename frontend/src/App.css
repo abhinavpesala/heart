@@ -1,0 +1,49 @@
+:root { --bg:#f2f4f7; --card:#fff; --text:#1f2933; --muted:#697586; --line:#e3e8ee; --blue:#3b82f6; }
+body { background: var(--bg); color: var(--text); }
+.app { display:flex; flex-direction:column; height:100vh; }
+.disclaimer { background:#fff4e5; color:#7a4b00; border-bottom:2px solid #f5a524; padding:8px 16px; font-size:13px; font-weight:600; text-align:center; }
+.container { flex:1; min-height:0; display:grid; grid-template-columns: 330px 1fr 390px; gap:14px; padding:14px; }
+.sidebar, .panel { background:var(--card); border-radius:12px; padding:18px; box-shadow:0 2px 8px rgba(0,0,0,.08); overflow-y:auto; }
+.panel { background:transparent; box-shadow:none; padding:0; display:flex; flex-direction:column; gap:12px; }
+.sidebar h1 { font-size:19px; margin-bottom:12px; }
+.group { border-top:1px solid var(--line); padding:8px 0; }
+.group summary, details.card summary { cursor:pointer; font-weight:600; font-size:14px; }
+.fields { margin-top:10px; }
+.input-group { margin-bottom:10px; }
+.input-group label { display:block; font-size:12.5px; font-weight:500; margin-bottom:3px; color:#455; }
+.input-group input, .input-group select { width:100%; padding:6px 9px; border:1px solid #d5dbe3; border-radius:6px; font-size:13.5px; }
+.input-group small { color:var(--muted); font-size:11px; }
+.check { display:flex; align-items:center; gap:8px; font-size:13.5px; margin-bottom:8px; }
+.check.live { margin-bottom:6px; font-weight:600; }
+.btn-predict { width:100%; padding:11px; margin-top:12px; background:var(--blue); color:#fff; border:0; border-radius:6px; font-weight:600; cursor:pointer; }
+.btn-predict:disabled { background:#c5ccd6; cursor:not-allowed; }
+.canvas-container { position:relative; background:radial-gradient(circle at 50% 40%, #fff, #e6ebf2); border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.08); min-height:420px; }
+.hint { position:absolute; bottom:10px; left:0; right:0; text-align:center; font-size:12px; color:var(--muted); pointer-events:none; }
+.busy { position:absolute; top:10px; right:12px; font-size:12px; color:var(--muted); }
+.vessel-tag { background:rgba(255,255,255,.92); border:1px solid var(--line); border-radius:6px; padding:2px 7px; font-size:12px; font-weight:700; white-space:nowrap; }
+.vessel-tag.sel { border-color:var(--blue); color:var(--blue); }
+.card { background:var(--card); border-radius:12px; padding:14px 16px; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+.card h3 { font-size:14px; margin-bottom:8px; }
+.muted { color:var(--muted); font-size:12.5px; line-height:1.4; }
+.notice { background:#eef5ff; border-left:3px solid var(--blue); padding:8px 10px; border-radius:6px; font-size:12.5px; margin:8px 0; }
+.notice.err { background:#fdecec; border-color:#e5484d; }
+.risk-badge { display:inline-block; padding:7px 14px; border-radius:6px; font-weight:700; color:#fff; margin-bottom:6px; }
+.risk-badge.high { background:#e5484d; } .risk-badge.moderate { background:#f5a524; } .risk-badge.low { background:#2fbf71; }
+.overall { cursor:pointer; }
+.vrow { display:flex; align-items:center; gap:8px; padding:6px 6px; border-radius:6px; cursor:pointer; }
+.vrow.sel { background:#eef5ff; }
+.vname { width:38px; font-weight:700; font-size:13px; }
+.track { flex:1; height:10px; background:#e8ecf1; border-radius:5px; overflow:hidden; }
+.fill { height:100%; border-radius:5px; transition:width .3s; }
+.vp { width:38px; text-align:right; font-size:13px; font-variant-numeric:tabular-nums; }
+.defer { color:#b45309; cursor:help; }
+table { width:100%; border-collapse:collapse; }
+.contrib td { padding:3px 0; font-size:12px; vertical-align:middle; }
+.contrib .lab { width:44%; } .contrib .lab span { display:block; color:var(--muted); font-size:11px; } .dflt { font-style:italic; }
+.contrib .barcell { width:36%; padding:0 6px; } .bar { height:9px; border-radius:3px; min-width:2px; }
+.contrib .num { text-align:right; width:20%; font-variant-numeric:tabular-nums; }
+.metrics th, .metrics td { font-size:12px; padding:3px 4px; text-align:right; } .metrics td:first-child, .metrics th:first-child { text-align:left; font-weight:600; }
+@media (max-width:1200px) {
+  .app { height:auto; } .container { grid-template-columns:1fr; }
+  .canvas-container { height:480px; } .sidebar { max-height:none; }
+}
