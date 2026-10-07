@@ -1,197 +1,150 @@
-import { useEffect, useMemo, useState, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useState } from "react";
+import { Html } from "@react-three/drei";
 import * as THREE from "three";
+import { ARTERIES, BRANCHES, ELLIPSOIDS, LESION_T, TUBES, deform } from "./heartGeometry";
 
-// Heart ellipsoid radii.
-const A = 1.0, B = 1.2, C = 0.9;
-const pt = (x, y, side = 1) => {
-  const q = 1 - (x * x) / (A * A) - (y * y) / (B * B);
-  return new THREE.Vector3(x, y, side * C * Math.sqrt(Math.max(q, 0))).multiplyScalar(1.04);
-};
+// Anatomical-illustration style: opaque pink myocardium with muscle fibres, red aorta, lilac pulmonary arteries,
+// mauve right heart, branching coronary arteries. Artery COLOUR = predicted stenosis probability (green -> amber -> red);
+// the yellow "plaque" swelling grows with that probability. Lighting comes from the <Canvas> in App.jsx.
 
-// Main coronary pathways
-const PATHS = {
-  LAD: [pt(0.05, 0.65), pt(0.15, 0.4), pt(0.3, 0.0), pt(0.35, -0.4), pt(0.2, -0.85)],
-  LCX: [pt(0.1, 0.65), pt(0.4, 0.55), pt(0.7, 0.4), pt(0.8, 0.2), pt(0.7, -0.1)],
-  RCA: [pt(-0.1, 0.6), pt(-0.4, 0.4), pt(-0.6, 0.1), pt(-0.5, -0.3), pt(-0.3, -0.6)],
-};
-
-// Medical color palette matching the illustration
-const COLORS = {
-  myocardium: "#b03a47",       // Muscle red-crimson
-  vesselHealthy: "#d64550",   // Oxygenated arterial red
-  plaque: "#fcd34d",          // Stenosis yellow
-  aorta: "#e0535d",           // Main aortic arch red
-  pulmonary: "#c0a0c7"        // Deoxygenated artery pink-purple
-};
-
-// Aorta & Pulmonary main artery path definitions
-const createAortaPoints = () => [
-  new THREE.Vector3(0.0, 0.5, 0.2),
-  new THREE.Vector3(-0.05, 1.1, 0.3),
-  new THREE.Vector3(0.1, 1.5, 0.1),
-  new THREE.Vector3(0.4, 1.4, -0.3),
-  new THREE.Vector3(0.45, 0.7, -0.5)
-];
-
-const createPulmonaryPoints = () => [
-  new THREE.Vector3(0.1, 0.5, 0.4),
-  new THREE.Vector3(0.2, 0.9, 0.45),
-  new THREE.Vector3(0.4, 1.0, 0.2),
-];
-
-/**
- * Diagnostic Lighting Studio Environment
- * Casts precise clinical drop-shadows across tissue topography
- */
-export function CardiacLighting() {
-  return (
-    <group>
-      {/* Soft wrap-around ambient filling */}
-      <ambientLight intensity={0.6} color="#ffffff" />
-      
-      {/* High-definition key light mapping contours from the upper-front-left */}
-      <directionalLight
-        position={[5, 8, 5]}
-        intensity={1.5}
-        castShadow
-        shadow-mapSize={[2048, 2048]}
-        shadow-bias={-0.0001}
-      />
-      
-      {/* Rim back-lighting to pop the organic edges away from darkness */}
-      <directionalLight position={[-5, 3, -4]} intensity={0.6} color="#90b0ff" />
-      
-      {/* Soft bounce lighting ascending from body cavity space */}
-      <directionalLight position={[0, -5, 2]} intensity={0.4} color="#ffb0b0" />
-    </group>
-  );
+const GREEN = new THREE.Color("#2fbf71"), AMBER = new THREE.Color("#f5a524"), RED = new THREE.Color("#e5484d");
+export function riskColor(p) {
+  if (p == null) return new THREE.Color("#c9a0a6");           // neutral until a prediction exists
+  return p < 0.5 ? GREEN.clone().lerp(AMBER, p / 0.5) : AMBER.clone().lerp(RED, (p - 0.5) / 0.5);
 }
 
-function GreatVessels() {
-  const aortaGeo = useMemo(() => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(createAortaPoints()), 32, 0.22, 16, false), []);
-  const pulmGeo = useMemo(() => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(createPulmonaryPoints()), 32, 0.16, 16, false), []);
-  
-  // High-order branching vessels coming off the aortic arch
-  const branchGeo1 = useMemo(() => new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0.05, 1.42, 0.18), new THREE.Vector3(0.02, 1.8, 0.2)]), 10, 0.05, 8, false), []);
-  const branchGeo2 = useMemo(() => new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0.18, 1.47, 0.08), new THREE.Vector3(0.18, 1.85, 0.08)]), 10, 0.04, 8, false), []);
-  const branchGeo3 = useMemo(() => new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(0.28, 1.46, -0.05), new THREE.Vector3(0.32, 1.82, -0.1)]), 10, 0.04, 8, false), []);
-
-  return (
-    <group>
-      {/* Aorta */}
-      <mesh geometry={aortaGeo} castShadow receiveShadow>
-        <meshStandardMaterial color={COLORS.aorta} roughness={0.35} metalness={0.05} />
-      </mesh>
-      <mesh geometry={branchGeo1} castShadow><meshStandardMaterial color={COLORS.aorta} roughness={0.35} /></mesh>
-      <mesh geometry={branchGeo2} castShadow><meshStandardMaterial color={COLORS.aorta} roughness={0.35} /></mesh>
-      <mesh geometry={branchGeo3} castShadow><meshStandardMaterial color={COLORS.aorta} roughness={0.35} /></mesh>
-
-      {/* Pulmonary Artery Trunk & Left/Right division */}
-      <mesh geometry={pulmGeo} castShadow receiveShadow>
-        <meshStandardMaterial color={COLORS.pulmonary} roughness={0.45} />
-      </mesh>
-      {/* Left branch */}
-      <mesh position={[0.4, 1.0, 0.2]} rotation={[0, 0, Math.PI / 4]} castShadow>
-        <cylinderGeometry args={[0.09, 0.08, 0.3]} />
-        <meshStandardMaterial color={COLORS.pulmonary} roughness={0.45} />
-      </mesh>
-      {/* Right branch curving under aorta */}
-      <mesh position={[0.1, 0.88, 0.1]} rotation={[0, 0, -Math.PI / 2.5]} castShadow>
-        <cylinderGeometry args={[0.09, 0.08, 0.4]} />
-        <meshStandardMaterial color={COLORS.pulmonary} roughness={0.45} />
-      </mesh>
-    </group>
-  );
+// Procedural muscle-fibre texture (diagonal strokes, wrapped so the sphere seam is invisible).
+function makeMuscleTexture() {
+  const c = document.createElement("canvas"); c.width = 512; c.height = 512;
+  const g = c.getContext("2d");
+  const grad = g.createLinearGradient(0, 0, 0, 512); grad.addColorStop(0, "#ecb4b2"); grad.addColorStop(1, "#d98c92");
+  g.fillStyle = grad; g.fillRect(0, 0, 512, 512);
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  g.lineCap = "round";
+  for (let i = 0; i < 700; i++) {
+    const x = rnd() * 512, y = rnd() * 512, len = 40 + rnd() * 90, ang = 0.9 + rnd() * 0.5, bend = (rnd() - 0.5) * 24;
+    g.strokeStyle = rnd() < 0.5 ? `rgba(255,236,236,${0.08 + rnd() * 0.12})` : `rgba(150,70,85,${0.05 + rnd() * 0.1})`;
+    g.lineWidth = 1 + rnd() * 2.5;
+    for (const dx of [-512, 0, 512]) {
+      g.beginPath(); g.moveTo(x + dx, y);
+      g.quadraticCurveTo(x + dx + Math.cos(ang) * len * 0.5 + bend, y + Math.sin(ang) * len * 0.5, x + dx + Math.cos(ang) * len, y + Math.sin(ang) * len);
+      g.stroke();
+    }
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2, 1);
+  return t;
 }
 
-function Vessel({ name, prob, selected, onSelect }) {
-  const [hover, setHover] = useState(false);
-  const groupRef = useRef();
-  
-  const points = PATHS[name];
-  const curve = useMemo(() => new THREE.CatmullRomCurve3(points), [points]);
-  
-  // Base vessel shape
-  const baseGeometry = useMemo(() => new THREE.TubeGeometry(curve, 64, 0.035, 12, false), [curve]);
-  
-  // Plaque stenosis geometry slice
-  const plaqueGeometry = useMemo(() => {
-    if (!prob || prob < 0.3) return null;
-    const subPoints = points.slice(Math.floor(points.length * 0.25), Math.ceil(points.length * 0.65));
-    return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(subPoints), 32, 0.046, 12, false);
-  }, [points, prob]);
+// Ventricular mass: a unit sphere pushed through deform() (tapered apex, larger left ventricle, flatter base).
+function useHeartBody() {
+  const geo = useMemo(() => {
+    const g = new THREE.SphereGeometry(1, 72, 56);
+    const pos = g.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const [x, y, z] = deform(pos.getX(i), pos.getY(i), pos.getZ(i));
+      pos.setXYZ(i, x, y, z);
+    }
+    g.computeVertexNormals();
+    return g;
+  }, []);
+  const tex = useMemo(() => makeMuscleTexture(), []);
+  useEffect(() => () => { geo.dispose(); tex.dispose(); }, [geo, tex]);
+  return { geo, tex };
+}
 
-  // Frame animation loop executing steady lerp transitions on active pointers
-  useFrame((state, delta) => {
-    if (!groupRef.current) return;
-    
-    // Determine goal transformation matrices based on states
-    let targetScale = 1.0;
-    if (selected) targetScale = 1.25;
-    else if (hover) targetScale = 1.15;
-    
-    // Smooth damp interpolate across scales
-    groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), delta * 10);
-  });
-
-  const emissive = selected ? 0.4 : hover ? 0.25 : 0.0;
-
+// Generic tube along a polyline (great vessels, side branches). Rounded cap at the far end.
+function Tube({ pts, radius, color, segments = 40, capped = false, onClick }) {
+  const vecs = useMemo(() => pts.map((p) => new THREE.Vector3(...p)), [pts]);
+  const geo = useMemo(() => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(vecs), segments, radius, 14, false), [vecs, radius, segments]);
+  useEffect(() => () => geo.dispose(), [geo]);
   return (
-    <group ref={groupRef}>
-      {/* Underlying Healthy Vessel Channel */}
-      <mesh
-        geometry={baseGeometry}
-        castShadow
-        onClick={(e) => { e.stopPropagation(); onSelect(name); }}
-        onPointerOver={(e) => { e.stopPropagation(); setHover(true); document.body.style.cursor = "pointer"; }}
-        onPointerOut={() => { setHover(false); document.body.style.cursor = "auto"; }}
-      >
-        <meshStandardMaterial 
-          color={COLORS.vesselHealthy} 
-          emissive={COLORS.vesselHealthy} 
-          emissiveIntensity={emissive} 
-          roughness={0.4} 
-        />
+    <group>
+      <mesh geometry={geo} onClick={onClick}>
+        <meshStandardMaterial color={color} roughness={0.4} metalness={0.03} />
       </mesh>
-
-      {/* Localized Plaque Stenosis Overlay Indicator */}
-      {plaqueGeometry && (
-        <mesh geometry={plaqueGeometry} castShadow onClick={(e) => { e.stopPropagation(); onSelect(name); }}>
-          <meshStandardMaterial color={COLORS.plaque} roughness={0.3} metalness={0.1} />
+      {capped && (
+        <mesh position={vecs[vecs.length - 1]}>
+          <sphereGeometry args={[radius, 16, 12]} />
+          <meshStandardMaterial color={color} roughness={0.4} />
         </mesh>
       )}
     </group>
   );
 }
 
-export default function CardiacMesh({ probs, selected, onSelect }) {
+// One coronary artery + its side branches + a yellow plaque swelling at the lesion site.
+function Artery({ name, prob, selected, onSelect }) {
+  const [hover, setHover] = useState(false);
+  const curve = useMemo(() => new THREE.CatmullRomCurve3(ARTERIES[name].map((p) => new THREE.Vector3(...p))), [name]);
+  const geometry = useMemo(() => new THREE.TubeGeometry(curve, 72, selected ? 0.07 : 0.052, 12, false), [curve, selected]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
+  const color = useMemo(() => riskColor(prob), [prob]);
+
+  // plaque = three overlapping blobs along the artery at the lesion site; size grows with probability (illustrative)
+  const plaque = useMemo(() => {
+    if (prob == null || prob < 0.4) return [];
+    const s = Math.min((prob - 0.3) / 0.7, 1), up = new THREE.Vector3(0, 1, 0);
+    return [-0.07, 0, 0.07].map((dt, i) => {
+      const t = Math.min(Math.max(LESION_T[name] + dt, 0.02), 0.98);
+      const tangent = curve.getTangentAt(t);
+      return { pos: curve.getPointAt(t), quat: new THREE.Quaternion().setFromUnitVectors(up, tangent),
+               scale: [0.07 + 0.05 * s * (i === 1 ? 1.2 : 0.9), 0.1 + 0.05 * s, 0.07 + 0.05 * s * (i === 1 ? 1.2 : 0.9)] };
+    });
+  }, [curve, prob, name]);
+
+  const labelPos = useMemo(() => {
+    const p = curve.getPoint(LESION_T[name]);
+    return p.clone().add(p.clone().normalize().multiplyScalar(0.3));
+  }, [curve, name]);
+  const emissive = selected ? 0.6 : hover ? 0.35 : 0.12;
+  const click = (e) => { e.stopPropagation(); onSelect(name); };
+
   return (
-    <group rotation={[0, -Math.PI / 6, 0]}>
-      {/* Lighting Rig inside the local transformations */}
-      <CardiacLighting />
+    <group>
+      <mesh geometry={geometry} onClick={click}
+            onPointerOver={(e) => { e.stopPropagation(); setHover(true); document.body.style.cursor = "pointer"; }}
+            onPointerOut={() => { setHover(false); document.body.style.cursor = "auto"; }}>
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={emissive} roughness={0.4} />
+      </mesh>
+      {BRANCHES[name].map((pts, i) => <Tube key={i} pts={pts} radius={0.02} color={color} segments={16} onClick={click} />)}
+      {plaque.map((b, i) => (
+        <mesh key={i} position={b.pos} quaternion={b.quat} scale={b.scale} onClick={click}>
+          <sphereGeometry args={[1, 20, 16]} />
+          <meshStandardMaterial color="#f2d36b" roughness={0.45} emissive="#f2d36b" emissiveIntensity={selected ? 0.35 : 0.05} />
+        </mesh>
+      ))}
+      <Html position={labelPos} center distanceFactor={7} style={{ pointerEvents: "none" }}>
+        <div className={`vessel-tag ${selected ? "sel" : ""}`}>{name}{prob != null ? ` ${(prob * 100).toFixed(0)}%` : ""}</div>
+      </Html>
+    </group>
+  );
+}
 
-      {/* Great Vessels (Aorta and Pulmonary Systems) */}
-      <GreatVessels />
-
-      {/* Myocardium (Heart Muscle Body) */}
-      <mesh 
-        scale={[A, B, C]} 
-        castShadow 
-        receiveShadow 
-        onClick={(e) => { e.stopPropagation(); onSelect("CAD"); }}
-      >
-        <sphereGeometry args={[1, 48, 32]} />
-        <meshStandardMaterial 
-          color={COLORS.myocardium} 
-          roughness={0.65} 
-          metalness={0.02}
-        />
+export default function CardiacMesh({ probs, selected, onSelect }) {
+  const { geo, tex } = useHeartBody();
+  return (
+    <group position={[-0.1, -0.45, 0]}>
+      {/* left ventricle / main mass: click selects the overall CAD result */}
+      <mesh geometry={geo} onClick={(e) => { e.stopPropagation(); onSelect("CAD"); }}>
+        <meshPhysicalMaterial map={tex} color="#ffffff" roughness={0.5} clearcoat={0.25} clearcoatRoughness={0.45}
+                              emissive="#7a1f2a" emissiveIntensity={selected === "CAD" ? 0.35 : 0} />
       </mesh>
 
-      {/* Coronary Tree Branches */}
+      {/* right ventricle, right atrium, left atrial appendage */}
+      {ELLIPSOIDS.map((e) => (
+        <mesh key={e.name} position={e.c} scale={e.r}>
+          <sphereGeometry args={[1, 40, 30]} />
+          <meshStandardMaterial color={e.color} roughness={0.55} />
+        </mesh>
+      ))}
+
+      {/* aorta + arch branches, pulmonary trunk/arteries, superior vena cava */}
+      {TUBES.map((t) => <Tube key={t.name} pts={t.pts} radius={t.radius} color={t.color} capped />)}
+
+      {/* coronary arteries coloured by predicted stenosis probability */}
       {["LAD", "LCX", "RCA"].map((v) => (
-        <Vessel key={v} name={v} prob={probs?.[v]} selected={selected === v} onSelect={onSelect} />
+        <Artery key={v} name={v} prob={probs?.[v]} selected={selected === v} onSelect={onSelect} />
       ))}
     </group>
   );
