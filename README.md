@@ -28,20 +28,11 @@ uvicorn backend.main:app --reload            # http://localhost:8000/docs
 cd frontend && cp .env.example .env.local && npm install && npm run dev   # http://localhost:5173
 ```
 
-## Deploy
-1. **Push to GitHub** (include `dataset.csv`; `backend/models/` is rebuilt on the server).
-2. **Render**: New > Blueprint > select the repo (reads `render.yaml`). Build installs requirements and trains; start runs uvicorn on `$PORT`.
-   Note the URL, e.g. `https://cardiac-risk-api.onrender.com`; check `/health`.
-3. **Vercel**: New Project > import repo > **Root Directory = `frontend`** (Vite is auto-detected) > Environment Variable
-   `VITE_API_URL` = the Render URL (no trailing slash) > Deploy.
-4. **Back on Render**: set `CORS_ORIGINS` to your Vercel URL (e.g. `https://your-app.vercel.app`) and redeploy.
-   Changing `VITE_API_URL` later requires a Vercel **redeploy** (it is baked in at build time).
 
-Free-tier note: Render sleeps after ~15 min idle, so the first request can take up to a minute (the UI shows a connecting notice).
 
-## Layout
-```
+
+
 dataset.csv   requirements.txt   render.yaml
 backend/  common.py (shared preprocessing + field metadata)  train.py  service.py  main.py
 frontend/ package.json  vite.config.js  index.html  src/{main.jsx, App.jsx, App.css, index.css, components/CardiacMesh.jsx}
-```
+
