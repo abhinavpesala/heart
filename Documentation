@@ -11,29 +11,55 @@ Physicians are forced to parse patient health datasets across disparate, disconn
  The Core Problem
 There is no fluid, immediate translation layer connecting predictive analytics to spatial anomalies. Clinicians must mentally fuse complex statistical probability outputs (e.g., a raw numbers-based machine learning prediction) with actual physical heart anatomy.
 This heavy cognitive load slows down diagnostic speed, increases the margin for analytical error during patient triage, and reduces a patient's intuitive understanding of their condition.
-🗺️ 2. Solution Architecture
-The HeartAI system bridges this gap using a decoupled, highly performant architecture. It links a statistical Python inference machine learning layer with an asynchronous React 3D rendering pipeline framework:
+## 🫀 Machine Learning Architecture: Multi-Target Calibrated Ensemble
+The machine learning architecture is designed as a decoupled, multi-target ensemble pipeline. Instead of utilizing a single multi-label classifier or a complex neural network, the system deploys four separate, parallel binary classification pipelines. This ensures maximum structural independence and allows each pipeline to optimize its decision boundaries for specific vascular regions.
+Below is the technical breakdown of the model's internal structural pipeline:
 
-    Client Layer (Frontend)
-    subgraph Client_Layer [Frontend: Vite + React Three Fiber]
-        A[App.jsx: Patient Parameter Input UI] -->|Asynchronous JSON Payload| B(FastAPI Router Layer)
-        G[CardiacMesh.jsx: Three.js Render Loop] ---|60 FPS Dynamic Animation Map| H[Interactive 3D Heart Mesh View]
+[ Preprocessed Input Feature Vector (X) ]
+                    │
+   ┌────────────────┼────────────────┬────────────────┐
+   ▼                ▼                ▼                ▼
+[ CAD Pipeline ] [ LAD Pipeline ] [ LCX Pipeline ] [ RCA Pipeline ]
+   │                │                │                │
+   ▼                ▼                ▼                ▼
+[Random Forest]  [Random Forest]  [Random Forest]  [Random Forest]
+   │                │                │                │
+   ▼                ▼                ▼                ▼
+[Platt Calibr.]  [Platt Calibr.]  [Platt Calibr.]  [Platt Calibr.]
+   │                │                │                │
+   ▼                ▼                ▼                ▼
+[Conformal Set]  [Conformal Set]  [Conformal Set]  [Conformal Set]
+   │                │                │                │
+   └────────────────┼────────────────┴────────────────┘
+                    ▼
+[ Aggregated Integration Payload: Probabilities + Explanations (SHAP) ]
 
-     Backend Layer
-    subgraph Backend_Service [Backend: FastAPI Python Service]
-        B -->|Inference Execution Pipeline| C[service.py: Feature Vector Vectorization]
-        C -->|Memory Buffer Query| D[cad_bundle.joblib: Serialized Scikit-Learn Engine]
-        D -->|Statistical Evaluation Matrix| E[FastAPI Engine: Prediction & Feature Weights Compilation]
+------------------------------
+Architectural Components Breakdown##
+1. Core Estimator: Stratified Random Forests
 
-   Storage & Metrics
-    subgraph Offline_Pipeline [Training & Telemetry Pipeline]
-        F[(dataset.csv)] -->|Gradient Optimization Loop| I[train.py: Model Training Pipeline]
-        I -->|Export Binary Bundle| D
-        I -->|Compute Telemetry Performance| J[metrics.json: Validation Store]
-    end
+* Type: Bootstrap-aggregated (bagged) decision tree ensembles.
+* Mechanism: Each of the 4 targets (CAD, LAD, LCX, RCA) has its own independent Random Forest estimator.
+* Target Leakage Shielding: The targets themselves are strictly decoupled. When the LAD model trains, the actual structural labels for CAD, LCX, and RCA are explicitly purged from its input tensor matrix ($X$) to prevent mathematical shortcutting or label leakage.
 
-   Integration Link
-    E -->|JSON Response: Risk Probability + Spatial Scale Factors| G
+ 2. Translation Layer: Platt Probability Calibration
+
+* The Problem: Standard Random Forests optimize for pure classification accuracy by averaging votes across trees. This mathematically pushes predictive probabilities away from the extremes ($0$ and $1$) and clusters them heavily around the center hyperplane, destroying raw risk fidelity.
+* The Solution: A Platt Calibration layer (Sigmoid-based logistic regression) is wrapped around each Random Forest output. It maps raw, uncalibrated ensemble voting tallies into absolute, reliable probability distributions:
+$$P(\text{Stenosis} \mid X) = \frac{1}{1 + e^{A \cdot f(X) + B}}$$ 
+This guarantees that a predicted score of 0.842 translates directly to an exact 84.2% true clinical likelihood of stenosis.
+
+ 3. Risk Routing Layer: Split-Conformal Prediction Sets
+
+* Mechanism: To provide reliable uncertainty metrics alongside raw probabilities, a conformal prediction layer processes the calibrated outputs.
+* Output: Instead of returning a fragile point prediction, it establishes statistical margins of error. If a patient's vector lands close to the model's high-uncertainty decision hyperplane, the conformal engine flags a wide prediction set. This triggers the Risk-Averse Routing Logic, categorizing the status as Human Audit Mandatory to protect borderline cases from false negatives.
+
+ 4. Diagnostic Attribution Layer: Permutation SHAP
+
+* Mechanism: A local explainability engine sits parallel to the inference layer. It calculates Shapley values using localized permutation sampling against a baseline derived from real healthy patients in the Z-Alizadeh Sani matrix.
+* Output: It breaks down the exact marginal contribution of each biometric input vector (e.g., Oldpeak, Cholesterol) in absolute probability points, giving clinicians a transparent mathematical breakdown of why an artery was flagged as high risk.
+
+
 
    
  3. System Effectiveness
