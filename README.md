@@ -23,7 +23,7 @@ weaker than CAD/LAD (see `/metrics`).
 ```bash
 pip install -r requirements.txt
 python -m backend.train                      # ~20 s -> backend/models/
-uvicorn backend.main:app --reload            # http://localhost:8000/docs
+uvicorn backend.main:app --workers 4          # http://localhost:8000/docs
 
 cd frontend && cp .env.example .env.local && npm install && npm run dev   # http://localhost:5173
 ```
