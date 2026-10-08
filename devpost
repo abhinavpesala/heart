@@ -1,0 +1,43 @@
+Based on the provided codebase template (heart-main) and the Multimodal AI Hackathon 2026 Submission Guidelines requirements (What you built, the problem it solves, and how it works), here is a polished, ready-to-use Devpost project description.
+------------------------------
+## 🫀 HeartAI: Multimodal Coronary Artery Disease Predictive Ecosystem## 💡 Inspiration
+Coronary Artery Disease (CAD) remains one of the leading global causes of mortality. Traditional diagnostic pipelines rely heavily on fragmented procedures, making early estimation and triage difficult. Inspired by the Multimodal AI Hackathon 2026, our team wanted to create an interconnected, modern application that bridges data science tools with user-centric visual frontends. We designed HeartAI to provide immediate, actionable predictive insights combining analytical tabular datasets with interactive immersive experiences.
+## 🔍 The Problem It Solves
+Cardiovascular risk evaluation is often inaccessible, numbers-heavy, and difficult for non-technical patients or clinics to conceptualize intuitively.
+
+* Data Fragmentation: Clinical machine learning models usually live isolated inside backend files or notebooks, lacking user engagement layers.
+* Lack of Visualization: Patients struggle to understand literal risk metrics without anatomical contexts.
+* HeartAI solves this by packaging an analytics-driven Python predictive server together with an interactive 3D frontend experience (CardiacMesh), transforming cold mathematical outputs into visual reality.
+
+## ⚙️ How It Works
+The project leverages a robust decoupled architecture partitioned into decoupled backend processing layers and interactive consumer clients:
+
+   1. The Core Data Engine (dataset.csv): Evaluates patient parameters mapping key cardiac medical indicators.
+   2. Predictive Analytics Layer (backend):
+   * Engineered with Python using predictive components packed cleanly via cad_bundle.joblib.
+      * Tracks evaluation accuracy metrics stored explicitly via localized meta-tracking layers (metrics.json).
+      * Built as an operational server framework deploying web hooks safely across local and staging configurations (main.py, service.py).
+   3. Immersive Client Platform (frontend):
+   * Engineered natively atop a structured React workspace compiled instantly via Vite.
+      * Leverages 3D workspace engines (CardiacMesh.jsx) to map numerical backend evaluation values directly onto high-fidelity visual structures.
+   
+## 🛠️ How We Built It
+
+* Backend: Python, Scikit-Learn, FastAPI/Uvicorn, Joblib.
+* Frontend: React.js, Vite, Three.js / React Three Fiber (for 3D mesh rendering), CSS3.
+* DevOps & Architecture: Configured for cloud-native deployment patterns using multi-environment deployment blueprints (render.yaml).
+
+## 🏆 Accomplishments That We're Proud Of
+
+* Flawless Model Packaging: Successfully abstracted complex predictive routines down to a modular backend plugin module.
+* Interactive 3D Bindings: Bridged standard REST response models directly to active mesh vertices inside a real-time reactive web application.
+* Production-Ready Pipeline: Developed a structural repository blueprint that meets exact architectural guidelines out of the box.
+
+## 🧠 What We Learned
+We mastered managing high-performance assets inside hot-reloading web clients, decoupled model compilation patterns, and unified multiple developer components cleanly into a cohesive product presentation.
+## 🚀 What's Next for HeartAI
+
+* Real-time DICOM mapping: Allowing users to ingest literal medical scans to map real physical abnormalities directly onto the structural 3D canvas layer.
+* Enhanced Edge Processing: Miniaturizing backend serialization libraries to execute predictive passes entirely browser-side for maximum processing speed and offline user privacy.
+
+
