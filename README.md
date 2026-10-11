@@ -25,11 +25,23 @@ uvicorn backend.main:app --workers 4          # http://localhost:8000/docs
 cd frontend && cp .env.example .env.local && npm install && npm run dev   # http://localhost:5173
 ```
 
-
-
-
-
-dataset.csv   requirements.txt   render.yaml
-backend/  common.py (shared preprocessing + field metadata)  train.py  service.py  main.py
-frontend/ package.json  vite.config.js  index.html  src/{main.jsx, App.jsx, App.css, index.css, components/CardiacMesh.jsx}
-
+dataset.csv 
+requirements.txt 
+render.yaml
+backend/ 
+     common.py (shared preprocessing + field metadata)  
+     train.py  
+     service.py 
+     main.py
+frontend/ 
+     package.json  
+     vite.config.js  
+     index.html  
+  src/
+    components/
+        CardiacMesh.jsx
+        heartGeometry.js
+     main.jsx
+     App.jsx
+     App.css
+     index.css
