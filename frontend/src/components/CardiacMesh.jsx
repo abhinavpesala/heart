@@ -3,17 +3,14 @@ import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import { ARTERIES, BRANCHES, ELLIPSOIDS, LESION_T, TUBES, deform } from "./heartGeometry";
 
-// Anatomical-illustration style: opaque pink myocardium with muscle fibres, red aorta, lilac pulmonary arteries,
-// mauve right heart, branching coronary arteries. Artery COLOUR = predicted stenosis probability (green -> amber -> red);
-// the yellow "plaque" swelling grows with that probability. Lighting comes from the <Canvas> in App.jsx.
 
 const GREEN = new THREE.Color("#2fbf71"), AMBER = new THREE.Color("#f5a524"), RED = new THREE.Color("#e5484d");
 export function riskColor(p) {
-  if (p == null) return new THREE.Color("#c9a0a6");           // neutral until a prediction exists
+  if (p == null) return new THREE.Color("#c9a0a6");
   return p < 0.5 ? GREEN.clone().lerp(AMBER, p / 0.5) : AMBER.clone().lerp(RED, (p - 0.5) / 0.5);
 }
 
-// Procedural muscle-fibre texture (diagonal strokes, wrapped so the sphere seam is invisible).
+
 function makeMuscleTexture() {
   const c = document.createElement("canvas"); c.width = 512; c.height = 512;
   const g = c.getContext("2d");
@@ -36,7 +33,6 @@ function makeMuscleTexture() {
   return t;
 }
 
-// Ventricular mass: a unit sphere pushed through deform() (tapered apex, larger left ventricle, flatter base).
 function useHeartBody() {
   const geo = useMemo(() => {
     const g = new THREE.SphereGeometry(1, 72, 56);
@@ -53,7 +49,7 @@ function useHeartBody() {
   return { geo, tex };
 }
 
-// Generic tube along a polyline (great vessels, side branches). Rounded cap at the far end.
+
 function Tube({ pts, radius, color, segments = 40, capped = false, onClick }) {
   const vecs = useMemo(() => pts.map((p) => new THREE.Vector3(...p)), [pts]);
   const geo = useMemo(() => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(vecs), segments, radius, 14, false), [vecs, radius, segments]);
@@ -73,15 +69,14 @@ function Tube({ pts, radius, color, segments = 40, capped = false, onClick }) {
   );
 }
 
-// One coronary artery + its side branches + a yellow plaque swelling at the lesion site.
-function Artery({ name, prob, selected, onSelect }) {
+
   const [hover, setHover] = useState(false);
   const curve = useMemo(() => new THREE.CatmullRomCurve3(ARTERIES[name].map((p) => new THREE.Vector3(...p))), [name]);
   const geometry = useMemo(() => new THREE.TubeGeometry(curve, 72, selected ? 0.07 : 0.052, 12, false), [curve, selected]);
   useEffect(() => () => geometry.dispose(), [geometry]);
   const color = useMemo(() => riskColor(prob), [prob]);
 
-  // plaque = three overlapping blobs along the artery at the lesion site; size grows with probability (illustrative)
+ 
   const plaque = useMemo(() => {
     if (prob == null || prob < 0.4) return [];
     const s = Math.min((prob - 0.3) / 0.7, 1), up = new THREE.Vector3(0, 1, 0);
@@ -125,24 +120,17 @@ export default function CardiacMesh({ probs, selected, onSelect }) {
   const { geo, tex } = useHeartBody();
   return (
     <group position={[-0.1, -0.45, 0]}>
-      {/* left ventricle / main mass: click selects the overall CAD result */}
       <mesh geometry={geo} onClick={(e) => { e.stopPropagation(); onSelect("CAD"); }}>
         <meshPhysicalMaterial map={tex} color="#ffffff" roughness={0.5} clearcoat={0.25} clearcoatRoughness={0.45}
                               emissive="#7a1f2a" emissiveIntensity={selected === "CAD" ? 0.35 : 0} />
       </mesh>
-
-      {/* right ventricle, right atrium, left atrial appendage */}
       {ELLIPSOIDS.map((e) => (
         <mesh key={e.name} position={e.c} scale={e.r}>
           <sphereGeometry args={[1, 40, 30]} />
           <meshStandardMaterial color={e.color} roughness={0.55} />
         </mesh>
       ))}
-
-      {/* aorta + arch branches, pulmonary trunk/arteries, superior vena cava */}
       {TUBES.map((t) => <Tube key={t.name} pts={t.pts} radius={t.radius} color={t.color} capped />)}
-
-      {/* coronary arteries coloured by predicted stenosis probability */}
       {["LAD", "LCX", "RCA"].map((v) => (
         <Artery key={v} name={v} prob={probs?.[v]} selected={selected === v} onSelect={onSelect} />
       ))}
