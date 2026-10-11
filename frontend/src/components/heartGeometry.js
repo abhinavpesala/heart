@@ -1,8 +1,5 @@
-// Simplified anatomical-style coronary geometry for the 3D viewer.
-// The paths are illustrative visualization coordinates, not patient-specific anatomy.
 
 export const ARTERIES = {
-  // Viewer-right / front: left anterior descending artery descending toward the apex.
   LAD: [
     [0.04, 0.58, 0.98],
     [0.10, 0.42, 1.02],
@@ -14,7 +11,6 @@ export const ARTERIES = {
     [-0.02, -0.78, 0.40],
   ],
 
-  // Viewer-right / upper side: circumflex artery wrapping around the lateral surface.
   LCX: [
     [0.02, 0.60, 0.98],
     [0.22, 0.58, 0.99],
@@ -25,7 +21,6 @@ export const ARTERIES = {
     [0.78, -0.12, 0.63],
   ],
 
-  // Viewer-left: right coronary artery descending and curving around the right-heart border.
   RCA: [
     [-0.15, 0.55, 0.96],
     [-0.30, 0.53, 0.97],
@@ -94,8 +89,6 @@ export const TUBES = [
     color: "#7b62bd",
   },
 ];
-
-// Push a sphere into a broad, slightly tapered heart-like form.
 export function deform(x, y, z) {
   const lowerTaper = 1 - Math.max(0, -y) * 0.16;
   const upperBulge = 1 + Math.max(0, y) * 0.08;
