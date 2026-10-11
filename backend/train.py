@@ -1,5 +1,4 @@
-"""Train CAD + LAD/LCX/RCA classifiers.  Run from the repo root:  python -m backend.train
-Output: backend/models/cad_bundle.joblib and backend/models/metrics.json"""
+
 import json, os, time
 from pathlib import Path
 import joblib, numpy as np, pandas as pd, sklearn
@@ -18,9 +17,8 @@ OUT = Path(__file__).resolve().parent / "models"
 SEED = 42
 N_REPEATS = int(os.environ.get("N_REPEATS", 3))
 N_TREES = int(os.environ.get("N_TREES", 200))
-REJECT_CONF = 0.65        # below this confidence the app defers to a cardiologist
-ALPHA = 0.10              # conformal prediction: 90% target coverage
-
+REJECT_CONF = 0.65       
+ALPHA = 0.10             
 def make_rf():
     return RandomForestClassifier(N_TREES, min_samples_leaf=3, class_weight="balanced_subsample",
                                   random_state=SEED, n_jobs=-1)
@@ -35,7 +33,7 @@ def oof(make_model, X, y):
     return np.mean(ps, axis=0)
 
 def conformal_q(p, y):
-    s = np.where(y == 1, 1 - p, p)                     # nonconformity = 1 - prob. of the true class
+    s = np.where(y == 1, 1 - p, p)                    
     k = int(np.ceil((len(s) + 1) * (1 - ALPHA)))
     return float(np.sort(s)[min(k, len(s)) - 1])
 
@@ -43,7 +41,7 @@ def main():
     t0 = time.time()
     raw = pd.read_csv(DATA)
     ys = make_targets(raw)
-    X = preprocess(raw.drop(columns=LEAKAGE_COLS))     # leakage columns removed BEFORE preprocessing
+    X = preprocess(raw.drop(columns=LEAKAGE_COLS))     
     assert not set(LEAKAGE_COLS) & set(X.columns) and not X.isna().any().any()
     print(f"data {X.shape} | positives: " + ", ".join(f"{t}={int(y.sum())}" for t, y in ys.items()))
 
@@ -52,7 +50,6 @@ def main():
     for t in TARGETS:
         y = ys[t]
         p_raw = oof(make_rf, X, y)
-        # Platt calibration on out-of-fold scores (cross-validated again so the Brier score stays honest)
         p = cross_val_predict(LogisticRegression(), logit(p_raw)[:, None], y, method="predict_proba",
                               cv=StratifiedKFold(5, shuffle=True, random_state=SEED))[:, 1]
         yh = (p >= 0.5).astype(int)
@@ -84,7 +81,7 @@ def main():
         features=FEATURES, groups=FEATURE_GROUPS, targets=TARGETS, models=models,
         medians={c: float(X[c].median()) for c in FEATURES},
         ranges={c: dict(min=float(X[c].min()), max=float(X[c].max())) for c in FEATURES},
-        background=X.sample(100, random_state=SEED).to_numpy(),      # reference patients for the explanations
+        background=X.sample(100, random_state=SEED).to_numpy(),     
         reject_conf=REJECT_CONF, alpha=ALPHA, global_importance=importances,
         meta=dict(sklearn=sklearn.__version__, n_patients=len(X), cv=f"{N_REPEATS}x repeated stratified 5-fold",
                   trained_at=time.strftime("%Y-%m-%d %H:%M:%S")))
