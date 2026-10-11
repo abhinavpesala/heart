@@ -105,13 +105,11 @@ export default function App() {
   const [values, setValues] = useState({});
   const [result, setResult] = useState(null);
   const [selected, setSelected] = useState("CAD");
-  const [status, setStatus] = useState("connecting"); // connecting | ready | error
+  const [status, setStatus] = useState("connecting");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [live, setLive] = useState(true);
   const reqId = useRef(0);
-
-  // Load schema (also wakes a sleeping free-tier Render server).
   useEffect(() => {
     api("/schema")
       .then((s) => {
@@ -129,15 +127,13 @@ export default function App() {
     try {
       const body = JSON.stringify({ features: Object.fromEntries(Object.entries(vals).filter(([, v]) => v !== "")) });
       const data = await api("/predict", { method: "POST", headers: { "Content-Type": "application/json" }, body });
-      if (id === reqId.current) setResult(data); // ignore out-of-order responses
+      if (id === reqId.current) setResult(data);
     } catch (e) {
       if (id === reqId.current) setError(e.message);
     } finally {
       if (id === reqId.current) setLoading(false);
     }
   }, []);
-
-  // Live update: debounce so typing does not spam the server.
   useEffect(() => {
     if (status !== "ready" || !live) return;
     const t = setTimeout(() => predict(values), 600);
