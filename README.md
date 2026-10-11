@@ -15,9 +15,6 @@ Z-Alizadeh Sani clinical dataset (303 patients) and paints the predicted probabi
 | API | FastAPI: `/health`, `/schema`, `/metrics`, `/predict`. The form is generated from `/schema`, so new features need no UI change. |
 | 3D | React Three Fiber: LAD/LCX/RCA tubes coloured by probability, click to inspect, rotate and zoom. |
 
-**Honest scope note.** The dataset has no raw ECG signals or echo videos, only ECG- and echo-*derived* columns, so no ECG/echo
-foundation-model embeddings are used. Region-RWMA is a clinical feature, not an anatomical lesion map. LCX/RCA models are
-weaker than CAD/LAD (see `/metrics`).
 
 ## Run locally
 ```bash
