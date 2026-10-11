@@ -18,7 +18,10 @@ Z-Alizadeh Sani clinical dataset (303 patients) and paints the predicted probabi
 
 TERMINAL 1:
 pip install -r requirements.txt
-python -m backend.train                     
+
+python -m backend.train     
+
+
 uvicorn backend.main:app --workers 4
 
 OUTPUT:
@@ -28,8 +31,11 @@ http://localhost:8000/docs
 
 TERMINAL 2:
 cd frontend 
+
 cp .env.example .env.local 
+
 npm install 
+
 npm run dev
 
 OUTPUT:
