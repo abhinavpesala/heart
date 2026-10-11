@@ -16,14 +16,25 @@ Z-Alizadeh Sani clinical dataset (303 patients) and paints the predicted probabi
 | 3D | React Three Fiber: LAD/LCX/RCA tubes coloured by probability, click to inspect, rotate and zoom. |
 
 
-## Run locally
-```bash
+TERMINAL 1:
 pip install -r requirements.txt
-python -m backend.train                      # ~20 s -> backend/models/
-uvicorn backend.main:app --workers 4          # http://localhost:8000/docs
+python -m backend.train                     
+uvicorn backend.main:app --workers 4
 
-cd frontend && cp .env.example .env.local && npm install && npm run dev   # http://localhost:5173
-```
+OUTPUT:
+http://localhost:8000/docs
+
+
+
+TERMINAL 2:
+cd frontend 
+cp .env.example .env.local 
+npm install 
+npm run dev
+
+OUTPUT:
+http://localhost:5173
+
 
 dataset.csv 
 requirements.txt 
