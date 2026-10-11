@@ -1,10 +1,8 @@
-"""Shared preprocessing + field metadata. Used by BOTH training and the API,
-so the model never sees differently-processed data in production."""
 import numpy as np
 import pandas as pd
 
 TARGETS = ["CAD", "LAD", "LCX", "RCA"]
-LEAKAGE_COLS = ["Cath", "LAD", "LCX", "RCA"]      # never used as model inputs
+LEAKAGE_COLS = ["Cath", "LAD", "LCX", "RCA"]     
 
 GROUP_TITLES = {"clinical": "Clinical & history", "ecg": "ECG findings",
                 "lab": "Laboratory", "echo": "Echocardiography"}
