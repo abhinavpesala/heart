@@ -43,22 +43,37 @@ http://localhost:5173
 
 
 dataset.csv 
+
 requirements.txt 
-render.yaml
+
+
 backend/ 
+
      common.py (shared preprocessing + field metadata)  
+     
      train.py  
+     
      service.py 
+     
      main.py
+     
 frontend/ 
+
      package.json  
+     
      vite.config.js  
+     
      index.html  
+     
   src/
     components/
         CardiacMesh.jsx
         heartGeometry.js
+        
      main.jsx
+     
      App.jsx
+     
      App.css
+     
      index.css
