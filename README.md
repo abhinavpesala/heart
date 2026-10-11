@@ -66,8 +66,11 @@ frontend/
      index.html  
      
   src/
+  
     components/
+    
         CardiacMesh.jsx
+        
         heartGeometry.js
         
      main.jsx
