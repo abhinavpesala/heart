@@ -1,4 +1,4 @@
-"""Prediction + explanation logic (no web framework here, so it can be unit-tested)."""
+
 import json
 from pathlib import Path
 import joblib, numpy as np, pandas as pd
@@ -10,7 +10,6 @@ DISCLAIMER = ("Decision-support / educational use only. Predictions are NOT a su
 _B = None
 
 def load():
-    """Load the trained bundle once. Fails loudly (with the fix) if training has not been run."""
     global _B
     path = MODEL_DIR / "cad_bundle.joblib"
     if not path.exists():
@@ -18,7 +17,7 @@ def load():
                            "(on Render this runs in the build command).")
     _B = joblib.load(path)
     for m in _B["models"].values():
-        m["rf"].set_params(n_jobs=1)                      # small free-tier CPU: avoid thread overhead
+        m["rf"].set_params(n_jobs=1)                  
     return _B
 
 def bundle():
@@ -79,7 +78,7 @@ def predict(raw: dict, top_k: int = 12):
     warnings = [f"{META[c]['label']} = {row.at[0, c]:g} is outside the training range "
                 f"[{b['ranges'][c]['min']:g}, {b['ranges'][c]['max']:g}]"
                 for c in given if not b["ranges"][c]["min"] <= row.at[0, c] <= b["ranges"][c]["max"]]
-    for c in FEATURES:                                    # anything not supplied -> training median
+    for c in FEATURES:                                   
         if c not in given: row.at[0, c] = b["medians"][c]
     x = row.iloc[0].to_numpy(dtype=float)
     attrs = _attributions(x)
